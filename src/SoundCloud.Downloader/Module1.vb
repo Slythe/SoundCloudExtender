@@ -86,15 +86,32 @@ Module Module1
         Dim authorised As Boolean = False
 
 
-        Dim clientID As String = "e27237feeacad4b742df8473e676cb97"
-        Dim clientSecret As String = "86a3e43ddbace10e5c9c5427aa4266a2"
+        Console.WriteLine("Please enter your SoundCloud login details")
 
-        Dim username As String = "superslythe"
+        Dim username As String = getUsername()
         Dim password As String = "b26a8c7d7d"
 
+
+
+        Console.Write("Password: ")
+
+        password = Console.ReadLine
+
+
+        Do Until Not String.IsNullOrWhiteSpace(password)
+
+            Console.WriteLine("No password detected, please try again")
+            Console.Write("Password: ")
+
+            password = Console.ReadLine
+
+        Loop
+
+
+
         Dim postData As String = _
-            "client_id=" & clientID & _
-            "&client_secret=" & clientSecret & _
+            "client_id=" & My.Settings.clientID & _
+            "&client_secret=" & My.Settings.clientSecret & _
             "&grant_type=password" & _
             "&username=" & username & _
             "&password=" & password
@@ -117,8 +134,21 @@ Module Module1
 
         Catch ex As Net.WebException
 
-            'Auth failed
-            _authorisation = Nothing
+            Dim WebResponse As System.Net.HttpWebResponse = ex.Response
+
+            If WebResponse.StatusCode = Net.HttpStatusCode.Unauthorized Then
+
+                'Auth failed
+                _authorisation = Nothing
+
+            Else
+
+                'Failed for some other reason - log
+
+                _authorisation = Nothing
+
+            End If
+
 
         End Try
 
@@ -126,6 +156,44 @@ Module Module1
 
     End Sub
 
+
+    Private Function getUsername() As String
+
+
+        Dim username As String = String.Empty
+
+
+        Console.Write("Username: ")
+
+        username = Console.ReadLine
+
+        Dim attemptCount As Integer = 1
+
+        Do Until Not String.IsNullOrWhiteSpace(username)
+
+            Console.WriteLine("No username detected, please try again (attempt " & attemptCount.ToString & " of 3)")
+            Console.Write("Username: ")
+
+            username = Console.ReadLine
+
+            'no more than 3 attempts
+            If attemptCount = 3 Then
+
+                Exit Do
+
+            Else
+
+                attemptCount += 1
+
+            End If
+
+        Loop
+
+
+        Return username
+
+
+    End Function
 
 
     Private Function canAccessAPI() As Boolean
@@ -250,30 +318,39 @@ Module Module1
 
                 canDownload = track("downloadable").InnerText
 
-                If canDownload.ToLower = "true" Then
+                downloadableTrack = New TrackModel(track("id").InnerText, _
+                                       track("title").InnerText)
 
-                    downloadableTrack = New TrackModel(track("id").InnerText, _
-                                                       track("title").InnerText)
+
+                If canDownload.ToLower = "true" Then
 
                     downloadableTrack.downloadUri = track("download-url").InnerText
 
+                Else
 
-                    Dim userNode As XmlNode = track.SelectSingleNode("user")
-
-                    user = New UserModel
-
-                    With user
-                        .id = userNode("id").InnerText
-                        .username = userNode("username").InnerText
-                    End With
-
-                    downloadableTrack.owner = user
-
-
-                    lstDownloadableTracks.Add(downloadableTrack)
-
+                    downloadableTrack.downloadUri = track("stream-url").InnerText
 
                 End If
+
+
+
+
+
+
+
+                Dim userNode As XmlNode = track.SelectSingleNode("user")
+
+                user = New UserModel
+
+                With user
+                    .id = userNode("id").InnerText
+                    .username = userNode("username").InnerText
+                End With
+
+                downloadableTrack.owner = user
+
+
+                lstDownloadableTracks.Add(downloadableTrack)
 
 
             Next
