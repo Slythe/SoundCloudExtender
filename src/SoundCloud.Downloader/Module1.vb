@@ -8,7 +8,7 @@ Module Module1
 
 
 
-    Private Const MUSIC_DIRECTORY As String = "C:\Users\Slyman\Music"
+    Private Const MUSIC_DIRECTORY As String = "E:\Users\Slyman\My Music\"
 
 
 
@@ -397,12 +397,21 @@ Module Module1
 
                 createDirectoryIfRequired(trackInfo.owner)
 
+                Try
 
-                _webClient.DownloadFile(trackInfo.downloadUri & _
-                                        "?oauth_token=" & _authorisation.access_token, _
-                                        downloadedSong.FullName)
+                    _webClient.DownloadFile(trackInfo.downloadUri & _
+                                            "?oauth_token=" & _authorisation.access_token, _
+                                            downloadedSong.FullName)
 
-                Console.WriteLine("     track downloaded.")
+
+                    Console.WriteLine("     track downloaded.")
+
+
+                Catch ex As Exception
+
+                    Console.WriteLine("     download failed: " & ex.Message)
+
+                End Try
 
 
             Else
