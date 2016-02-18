@@ -69,7 +69,7 @@ Module Module1
 
             Next
 
-            Console.WriteLine("Finished")
+            Console.WriteLine("Finished!")
 
         End If
 
